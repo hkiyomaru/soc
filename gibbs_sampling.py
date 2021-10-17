@@ -1,5 +1,6 @@
 import logging
 import random
+import typing
 
 import torch
 import tqdm
@@ -8,6 +9,22 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, AutoModelForMaskedLM, PreTrainedTokenizer
 
 logger = logging.getLogger(__file__)
+
+special_token_ids: list[int] = []
+
+
+def set_special_token_ids(tokenizer: PreTrainedTokenizer) -> None:
+    global special_token_ids
+
+    def add_id(id_: typing.Optional[int]) -> None:
+        if id_ is not None and id_ not in special_token_ids:
+            special_token_ids.append(id_)
+
+    add_id(tokenizer.sep_token_id)
+    add_id(tokenizer.cls_token_id)
+    add_id(tokenizer.bos_token_id)
+    add_id(tokenizer.eos_token_id)
+    special_token_ids.sort()
 
 
 class GibbsSamplingDataset(Dataset):
@@ -45,13 +62,6 @@ class GibbsSamplingDataset(Dataset):
         phrase_features = self.tokenizer(phrase, add_special_tokens=False)
 
         # get ID to mask
-        special_token_ids = {
-            self.tokenizer.sep_token_id,
-            self.tokenizer.cls_token_id,
-            self.tokenizer.bos_token_id,
-            self.tokenizer.eos_token_id,
-            *self.tokenizer.additional_special_tokens_ids,
-        }
         sep_id = features["input_ids"].index(self.tokenizer.sep_token_id)
         mask_id_cands = [
             i
@@ -111,7 +121,7 @@ def run_gibbs_sampling_step(mlm, loader: DataLoader, tokenizer: PreTrainedTokeni
                     attention_mask=batch["attention_mask"],
                 )
                 logits = outputs.logits
-
+                logits[:, :, special_token_ids] -= 128.  # prevent the model from producing a special token
                 indices_with_mask_0 = torch.arange(batch_size)[mask_id != -1]
                 indices_with_mask_1 = mask_id[mask_id != -1]
                 sample_input_ids[indices_with_mask_0, indices_with_mask_1] = Categorical(
@@ -131,6 +141,7 @@ def run_gibbs_sampling(
     max_seq_length: int,
 ) -> list[list[str]]:
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
+    set_special_token_ids(tokenizer)
 
     model_name_or_path = AutoModelForMaskedLM.from_pretrained(model_name_or_path)
     model_name_or_path.eval()
