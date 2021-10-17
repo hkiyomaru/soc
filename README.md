@@ -22,7 +22,7 @@ poetry install
 Prepare a tsv input file like [input.tsv in the data directory](./data/input.tsv); each row has a phrase being calculated its importance score (1st column) and a sentence that contains the phrase (2nd column).
 
 ```tsv
-We	We are very happy to show you the Transformers library.
+Transformers	We are very happy to show you the Transformers library.
 happy	We are very happy to show you the Transformers library.
 ```
 
@@ -44,7 +44,7 @@ poetry run python run.py \
 ## TODOs
 
 - In order to specify a phrase, use its span instead of its surface form.
-- Use GPUs to fasten the process.
+- Use multiple GPUs to fasten the process.
 
 ## Reference
 
