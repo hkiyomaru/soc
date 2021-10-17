@@ -68,8 +68,9 @@ def run_soc(
 
     _scores = []
     for batch in tqdm.tqdm(loader):
-        scores_s = cls(input_ids=batch["input_ids_s"], attention_mask=batch["attention_mask_s"]).logits[:, 1]
-        scores_soc = cls(input_ids=batch["input_ids_soc"], attention_mask=batch["attention_mask_soc"]).logits[:, 1]
+        with torch.no_grad():
+            scores_s = cls(input_ids=batch["input_ids_s"], attention_mask=batch["attention_mask_s"]).logits[:, 1]
+            scores_soc = cls(input_ids=batch["input_ids_soc"], attention_mask=batch["attention_mask_soc"]).logits[:, 1]
         _scores.extend((scores_s - scores_soc).tolist())
 
     scores = []
