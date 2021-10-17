@@ -107,9 +107,11 @@ class GibbsSamplingDataset(Dataset):
             self._list_of_samples[i].append(sample)
 
 
-def run_gibbs_sampling_step(mlm, loader: DataLoader, tokenizer: PreTrainedTokenizer) -> list[str]:
+def run_gibbs_sampling_step(mlm, loader: DataLoader, tokenizer: PreTrainedTokenizer, device) -> list[str]:
     samples = []
     for batch in tqdm.tqdm(loader):
+        batch = {k: v.to(device) for k, v in batch.items()}
+
         mask_id = batch["mask_id"].view(-1)
         batch_size = len(mask_id)
 
@@ -139,17 +141,19 @@ def run_gibbs_sampling(
     k: int,
     batch_size: int,
     max_seq_length: int,
+    device: str,
 ) -> list[list[str]]:
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
     set_special_token_ids(tokenizer)
 
-    model_name_or_path = AutoModelForMaskedLM.from_pretrained(model_name_or_path)
-    model_name_or_path.eval()
+    mlm = AutoModelForMaskedLM.from_pretrained(model_name_or_path)
+    mlm.eval()
+    mlm.to(device)
 
     dataset = GibbsSamplingDataset(inputs, tokenizer, max_seq_length)
     loader = DataLoader(dataset, batch_size)
 
     for _ in tqdm.tqdm(range(k)):
-        samples = run_gibbs_sampling_step(model_name_or_path, loader, tokenizer)
+        samples = run_gibbs_sampling_step(mlm, loader, tokenizer, device)
         dataset.add_samples(samples)
     return dataset.list_of_samples

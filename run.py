@@ -55,16 +55,19 @@ def main():
     parser.add_argument("--n", type=int, default=10, help="The size of context region.")
     parser.add_argument("--k", type=int, default=20, help="The number of samples.")
     parser.add_argument("--save_samples", action="store_true", help="Save samples.")
+    parser.add_argument("--gpu", type=int, default=-1, help="GPU ID.")
     args = parser.parse_args()
+
+    device = f"cuda:{args.gpu}" if args.gpu >= 0 else "cpu"
 
     logger.info("Load the input file.")
     inputs = load_inputs(args.input)
 
     logger.info("Run Gibbs sampling.")
-    list_of_samples = run_gibbs_sampling(inputs, args.mlm, args.k, args.batch_size, args.max_seq_length)
+    list_of_samples = run_gibbs_sampling(inputs, args.mlm, args.k, args.batch_size, args.max_seq_length, device)
 
     logger.info("Run SOC.")
-    scores = run_soc(inputs, list_of_samples, args.cls, args.batch_size, args.max_seq_length)
+    scores = run_soc(inputs, list_of_samples, args.cls, args.batch_size, args.max_seq_length, device)
 
     logger.info("Save the results.")
     save_outputs(args.output, inputs, scores)

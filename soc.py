@@ -57,17 +57,20 @@ def run_soc(
     model_name_or_path: str,
     batch_size: int,
     max_seq_length: int,
+    device: str,
 ) -> list[float]:
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
     cls = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
     cls.eval()
+    cls.to(device)
 
     dataset = SOCDataset(inputs, list_of_samples, tokenizer, max_seq_length)
     loader = DataLoader(dataset, batch_size // 2)  # because SOC uses two inputs for one instance
 
     _scores = []
     for batch in tqdm.tqdm(loader):
+        batch = {k: v.to(device) for k, v in batch.items()}
         with torch.no_grad():
             scores_s = cls(input_ids=batch["input_ids_s"], attention_mask=batch["attention_mask_s"]).logits[:, 1]
             scores_soc = cls(input_ids=batch["input_ids_soc"], attention_mask=batch["attention_mask_soc"]).logits[:, 1]
