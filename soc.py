@@ -41,7 +41,7 @@ class SOCDataset(Dataset):
             padding="max_length",
         )
         features_soc = self.tokenizer(
-            sample.replace(phrase, self.tokenizer.pad_token),
+            sample.replace(phrase, self.tokenizer.pad_token, 1),
             max_length=self.max_seq_length,
             truncation=True,
             padding="max_length",

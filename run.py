@@ -21,6 +21,11 @@ def load_inputs(path: str) -> list[tuple[str, str]]:
                 continue
             phrase, text = line.strip().split("\t")
             assert phrase in text, f"{phrase} not in {text} (line: {i + 1})"
+            if text.count(phrase) > 1:
+                logger.warning(
+                    f"in '{text}', '{phrase}' appears twice or more;"
+                    f"this implementation focuses on the first one (line: {i + 1})"
+                )
             inputs.append((phrase, text))
     return inputs
 
