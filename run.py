@@ -1,7 +1,7 @@
 import argparse
 import logging
-import random
 import os
+import random
 
 import numpy as np
 import torch
@@ -48,10 +48,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="Path to input file.")
     parser.add_argument("--output", required=True, help="Path to output directory.")
-    parser.add_argument("--cls", required=True, help="A pretrained sequence classification model.")
-    parser.add_argument("--mlm", required=True, help="A pretrained masked language model.")
+    parser.add_argument(
+        "--cls", required=True, help="A pretrained sequence classification model."
+    )
+    parser.add_argument(
+        "--mlm", required=True, help="A pretrained masked language model."
+    )
     parser.add_argument("--batch_size", type=int, default=20, help="Batch size.")
-    parser.add_argument("--max_seq_length", type=int, default=128, help="Max sequence length.")
+    parser.add_argument(
+        "--max_seq_length", type=int, default=128, help="Max sequence length."
+    )
     parser.add_argument("--n", type=int, default=10, help="The size of context region.")
     parser.add_argument("--k", type=int, default=20, help="The number of samples.")
     parser.add_argument("--save_samples", action="store_true", help="Save samples.")
@@ -64,10 +70,14 @@ def main():
     inputs = load_inputs(args.input)
 
     logger.info("Run Gibbs sampling.")
-    list_of_samples = run_gibbs_sampling(inputs, args.mlm, args.k, args.batch_size, args.max_seq_length, device)
+    list_of_samples = run_gibbs_sampling(
+        inputs, args.mlm, args.n, args.k, args.batch_size, args.max_seq_length, device
+    )
 
     logger.info("Run SOC.")
-    scores = run_soc(inputs, list_of_samples, args.cls, args.batch_size, args.max_seq_length, device)
+    scores = run_soc(
+        inputs, list_of_samples, args.cls, args.batch_size, args.max_seq_length, device
+    )
 
     logger.info("Save the results.")
     save_outputs(args.output, inputs, scores)
@@ -76,7 +86,7 @@ def main():
         save_samples(args.output, list_of_samples)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level="INFO"
     )

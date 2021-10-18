@@ -3,7 +3,11 @@ import logging
 import torch
 import tqdm
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizer
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    PreTrainedTokenizer,
+)
 
 logger = logging.getLogger(__file__)
 
@@ -66,20 +70,27 @@ def run_soc(
     cls.to(device)
 
     dataset = SOCDataset(inputs, list_of_samples, tokenizer, max_seq_length)
-    loader = DataLoader(dataset, batch_size // 2)  # because SOC uses two inputs for one instance
+    loader = DataLoader(
+        dataset, batch_size // 2
+    )  # because SOC uses two inputs for one instance
 
     _scores = []
     for batch in tqdm.tqdm(loader):
         batch = {k: v.to(device) for k, v in batch.items()}
         with torch.no_grad():
-            scores_s = cls(input_ids=batch["input_ids_s"], attention_mask=batch["attention_mask_s"]).logits[:, 1]
-            scores_soc = cls(input_ids=batch["input_ids_soc"], attention_mask=batch["attention_mask_soc"]).logits[:, 1]
+            scores_s = cls(
+                input_ids=batch["input_ids_s"], attention_mask=batch["attention_mask_s"]
+            ).logits[:, 1]
+            scores_soc = cls(
+                input_ids=batch["input_ids_soc"],
+                attention_mask=batch["attention_mask_soc"],
+            ).logits[:, 1]
         _scores.extend((scores_s - scores_soc).tolist())
 
     scores = []
     i = 0
     for samples in list_of_samples:
-        scores.append(sum(_scores[i:i + len(samples)]) / len(samples))
+        scores.append(sum(_scores[i : i + len(samples)]) / len(samples))
         i += len(samples)
 
     assert len(scores) == len(inputs)

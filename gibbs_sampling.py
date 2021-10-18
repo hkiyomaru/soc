@@ -6,7 +6,7 @@ import torch
 import tqdm
 from torch.distributions import Categorical
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoTokenizer, AutoModelForMaskedLM, PreTrainedTokenizer
+from transformers import AutoModelForMaskedLM, AutoTokenizer, PreTrainedTokenizer
 
 logger = logging.getLogger(__file__)
 
@@ -80,12 +80,12 @@ class GibbsSamplingDataset(Dataset):
         features["input_ids"] = (
             features["input_ids"][:sep_id]
             + phrase_features["input_ids"]
-            + features["input_ids"][sep_id + 1:]
+            + features["input_ids"][sep_id + 1 :]
         )
         features["attention_mask"] = (
             features["attention_mask"][:sep_id]
             + phrase_features["attention_mask"]
-            + features["attention_mask"][sep_id + 1:]
+            + features["attention_mask"][sep_id + 1 :]
         )
 
         # Truncate
@@ -107,7 +107,9 @@ class GibbsSamplingDataset(Dataset):
             self._list_of_samples[i].append(sample)
 
 
-def run_gibbs_sampling_step(mlm, loader: DataLoader, tokenizer: PreTrainedTokenizer, device) -> list[str]:
+def run_gibbs_sampling_step(
+    mlm, loader: DataLoader, tokenizer: PreTrainedTokenizer, device
+) -> list[str]:
     samples = []
     for batch in tqdm.tqdm(loader):
         batch = {k: v.to(device) for k, v in batch.items()}
@@ -123,10 +125,14 @@ def run_gibbs_sampling_step(mlm, loader: DataLoader, tokenizer: PreTrainedTokeni
                     attention_mask=batch["attention_mask"],
                 )
                 logits = outputs.logits
-                logits[:, :, special_token_ids] -= 128.  # prevent the model from producing a special token
+                logits[
+                    :, :, special_token_ids
+                ] -= 128.0  # prevent the model from producing a special token
                 indices_with_mask_0 = torch.arange(batch_size)[mask_id != -1]
                 indices_with_mask_1 = mask_id[mask_id != -1]
-                sample_input_ids[indices_with_mask_0, indices_with_mask_1] = Categorical(
+                sample_input_ids[
+                    indices_with_mask_0, indices_with_mask_1
+                ] = Categorical(
                     logits=logits[indices_with_mask_0, indices_with_mask_1]
                 ).sample()
         samples.extend(
@@ -138,6 +144,7 @@ def run_gibbs_sampling_step(mlm, loader: DataLoader, tokenizer: PreTrainedTokeni
 def run_gibbs_sampling(
     inputs: list[tuple[str, str]],
     model_name_or_path: str,
+    n: int,
     k: int,
     batch_size: int,
     max_seq_length: int,
@@ -150,7 +157,7 @@ def run_gibbs_sampling(
     mlm.eval()
     mlm.to(device)
 
-    dataset = GibbsSamplingDataset(inputs, tokenizer, max_seq_length)
+    dataset = GibbsSamplingDataset(inputs, tokenizer, max_seq_length, n)
     loader = DataLoader(dataset, batch_size)
 
     for _ in tqdm.tqdm(range(k)):
