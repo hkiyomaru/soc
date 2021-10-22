@@ -40,8 +40,9 @@ class SOCDataset(Dataset):
             truncation=True,
             padding="max_length",
         )
+        phrase_tokens = self.tokenizer.tokenize(phrase, add_special_tokens=False)
         features_soc = self.tokenizer(
-            sample.replace(phrase, self.tokenizer.pad_token, 1),
+            sample.replace(phrase, " ".join([self.tokenizer.pad_token] * len(phrase_tokens)), 1),
             max_length=self.max_seq_length,
             truncation=True,
             padding="max_length",
