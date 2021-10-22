@@ -51,7 +51,6 @@ happy	We are very happy to show you the Transformers library.	0.383293890953064
 ## TODOs
 
 - In order to specify a phrase, use its span instead of its surface form.
-- Use multiple GPUs to fasten the process.
 
 ## Reference
 
