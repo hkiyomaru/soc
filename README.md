@@ -37,6 +37,13 @@ poetry run python run.py \
     --save_samples
 ```
 
+The output file will be like this:
+
+```tsv
+Transformers library	We are very happy to show you the Transformers library.	-0.11680495142936706
+happy	We are very happy to show you the Transformers library.	0.383293890953064
+```
+
 ## Notes
 
 - This implementation performs Gibbs sampling from a masked LM (see [Wang and Cho (2019)](https://aclanthology.org/W19-2304/)). 
