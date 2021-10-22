@@ -19,7 +19,7 @@ class SOCDataset(Dataset):
         list_of_samples: list[list[str]],
         tokenizer: PreTrainedTokenizer,
         max_seq_length: int = 128,
-    ):
+    ) -> None:
         self.flattened_inputs = [
             (phrase, text, sample)
             for (phrase, text), samples in zip(inputs, list_of_samples)
@@ -42,7 +42,9 @@ class SOCDataset(Dataset):
         )
         phrase_tokens = self.tokenizer.tokenize(phrase, add_special_tokens=False)
         features_soc = self.tokenizer(
-            sample.replace(phrase, " ".join([self.tokenizer.pad_token] * len(phrase_tokens)), 1),
+            sample.replace(
+                phrase, " ".join([self.tokenizer.pad_token] * len(phrase_tokens)), 1
+            ),
             max_length=self.max_seq_length,
             truncation=True,
             padding="max_length",
@@ -71,16 +73,15 @@ def run_soc(
     cls.to(device)
 
     dataset = SOCDataset(inputs, list_of_samples, tokenizer, max_seq_length)
-    loader = DataLoader(
-        dataset, batch_size // 2
-    )  # because SOC uses two inputs for one instance
+    loader = DataLoader(dataset, batch_size // 2)
 
     _scores = []
-    for batch in tqdm.tqdm(loader):
-        batch = {k: v.to(device) for k, v in batch.items()}
+    for batch in tqdm.tqdm(loader):  # type: dict[str, torch.Tensor]
+        batch = {name: tensor.to(device) for name, tensor in batch.items()}
         with torch.no_grad():
             scores_s = cls(
-                input_ids=batch["input_ids_s"], attention_mask=batch["attention_mask_s"]
+                input_ids=batch["input_ids_s"],
+                attention_mask=batch["attention_mask_s"],
             ).logits[:, 1]
             scores_soc = cls(
                 input_ids=batch["input_ids_soc"],
@@ -93,7 +94,6 @@ def run_soc(
     for samples in list_of_samples:
         scores.append(sum(_scores[i : i + len(samples)]) / len(samples))
         i += len(samples)
-
     assert len(scores) == len(inputs)
     assert i == len(_scores)
 

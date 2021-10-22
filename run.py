@@ -20,7 +20,7 @@ def load_inputs(path: str) -> list[tuple[str, str]]:
             if line.strip() == "":
                 continue
             phrase, text = line.strip().split("\t")
-            assert phrase in text, f"{phrase} not in {text} (line: {i + 1})"
+            assert phrase in text, f"'{phrase}' not in '{text}' (line: {i + 1})"
             if text.count(phrase) > 1:
                 logger.warning(
                     f"in '{text}', '{phrase}' appears twice or more;"
@@ -49,6 +49,12 @@ def save_samples(path: str, list_of_samples: list[list[str]]) -> None:
             f.write("\t".join(samples) + "\n")
 
 
+def fix_random_seed(seed: int = 42):
+    random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="Path to input file.")
@@ -69,6 +75,8 @@ def main():
     parser.add_argument("--gpu", type=int, default=-1, help="GPU ID.")
     args = parser.parse_args()
 
+    fix_random_seed()
+
     device = f"cuda:{args.gpu}" if args.gpu >= 0 else "cpu"
 
     logger.info("Load the input file.")
@@ -87,7 +95,6 @@ def main():
     logger.info("Save the results.")
     save_outputs(args.output, inputs, scores)
     if args.save_samples:
-        logger.info("Save the sampled texts.")
         save_samples(args.output, list_of_samples)
 
 
@@ -95,10 +102,4 @@ if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level="INFO"
     )
-
-    seed = 42
-    random.seed(seed)
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-
     main()

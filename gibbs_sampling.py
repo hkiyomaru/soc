@@ -15,15 +15,10 @@ special_token_ids: list[int] = []
 
 def set_special_token_ids(tokenizer: PreTrainedTokenizer) -> None:
     global special_token_ids
-
-    def add_id(id_: typing.Optional[int]) -> None:
-        if id_ is not None and id_ not in special_token_ids:
-            special_token_ids.append(id_)
-
-    add_id(tokenizer.sep_token_id)
-    add_id(tokenizer.cls_token_id)
-    add_id(tokenizer.bos_token_id)
-    add_id(tokenizer.eos_token_id)
+    for special_token in tokenizer.special_tokens_map.values():
+        special_token_id = tokenizer.get_vocab()[special_token]
+        if special_token_id not in special_token_ids:
+            special_token_ids.append(special_token_id)
     special_token_ids.sort()
 
 
@@ -34,7 +29,7 @@ class GibbsSamplingDataset(Dataset):
         tokenizer: PreTrainedTokenizer,
         max_seq_length: int = 128,
         n: int = 10,
-    ):
+    ) -> None:
         self.texts = [text for _, text in inputs]
         self.phrases = [phrase for phrase, _ in inputs]
         self._list_of_samples: list[list[str]] = [[text] for _, text in inputs]
@@ -46,7 +41,7 @@ class GibbsSamplingDataset(Dataset):
     def __len__(self) -> int:
         return len(self.texts)
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
         text = self._list_of_samples[index][-1]
         phrase = self.phrases[index]
 
@@ -108,11 +103,11 @@ class GibbsSamplingDataset(Dataset):
 
 
 def run_gibbs_sampling_step(
-    mlm, loader: DataLoader, tokenizer: PreTrainedTokenizer, device
+    mlm, loader: DataLoader, tokenizer: PreTrainedTokenizer, device: str
 ) -> list[str]:
     samples = []
-    for batch in tqdm.tqdm(loader):
-        batch = {k: v.to(device) for k, v in batch.items()}
+    for batch in tqdm.tqdm(loader):  # type: dict[str, torch.Tensor]
+        batch = {name: tensor.to(device) for name, tensor in batch.items()}
 
         mask_id = batch["mask_id"].view(-1)
         batch_size = len(mask_id)
