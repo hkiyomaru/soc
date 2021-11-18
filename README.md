@@ -1,6 +1,6 @@
 # Sampling and Occlusion
 
-This repository contains scripts to perform Sampling and Occlusion proposed in [Jin et al. (2020)](https://openreview.net/forum?id=BkxRRkSKwr).
+This repository contains scripts to perform Sampling and Occlusion (SOC) proposed in [Jin et al. (2020)](https://openreview.net/forum?id=BkxRRkSKwr), an algorithm for calculating the importance of a phrase in prediction by a model.
 
 ## Requirements
 
@@ -46,7 +46,7 @@ happy	We are very happy to show you the Transformers library.	0.383293890953064
 
 ## Notes
 
-- This implementation performs Gibbs sampling from a masked LM (see [Wang and Cho (2019)](https://aclanthology.org/W19-2304/)). 
+- While the original implementation performs sampling from an LSTM LM, this implementation performs Gibbs sampling from a masked LM (c.f., [Wang and Cho (2019)](https://aclanthology.org/W19-2304/)).
 
 ## TODOs
 
