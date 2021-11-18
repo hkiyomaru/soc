@@ -58,7 +58,7 @@ def fix_random_seed(seed: int = 42):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="Path to input file.")
-    parser.add_argument("--output", required=True, help="Path to output directory.")
+    parser.add_argument("--output", required=True, help="Path to output file.")
     parser.add_argument(
         "--cls", required=True, help="A pretrained sequence classification model."
     )
