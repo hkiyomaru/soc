@@ -112,7 +112,7 @@ def run_gibbs_sampling_step(
         mask_id = batch["mask_id"].view(-1)
         batch_size = len(mask_id)
 
-        sample_input_ids = batch["input_ids"]
+        sample_input_ids = batch["input_ids"].clone()
         if (mask_id != -1).sum().item() != 0:
             with torch.no_grad():
                 outputs = mlm(
